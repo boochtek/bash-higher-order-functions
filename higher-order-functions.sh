@@ -1,17 +1,25 @@
 # Much like the Lisp `filter` function, takes a list of lines on STDIN and prints to STDOUT only the lines where the command passed in ($@) returns a TRUE (0) error code.
 function filter() {
-    local IFS=$'\n'
-    for line in $(cat /dev/stdin) ; do
-        $@ $line && echo $line
-    done
+    if [ "$(type -t $1)" == 'file' ]; then
+        xargs -I{} sh -c "$@ '{}' && echo '{}'"
+    else
+        local IFS=$'\n'
+        for line in $(cat /dev/stdin) ; do
+            $@ $line && echo $line
+        done
+    fi
 }
 
 # The opposite of `filter`.
 function reject() {
-    local IFS=$'\n'
-    for line in $(cat /dev/stdin) ; do
-        $@ $line || echo $line
-    done
+    if [ "$(type -t $1)" == 'file' ]; then
+        xargs -I{} sh -c "$@ '{}' || echo '{}'"
+    else
+        local IFS=$'\n'
+        for line in $(cat /dev/stdin) ; do
+            $@ $line || echo $line
+        done
+    fi
 }
 
 # Run a command, ignoring errors temporarily. Alternatively, give no arguments to ignore all errors going forward, or `--off` to terminate on errors going forward.
