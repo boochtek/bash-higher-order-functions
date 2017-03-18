@@ -36,3 +36,31 @@ function ignore_errors() {
         $@
     fi
 }
+
+# Run a command until it succeeds. The 1st argument is how many times to run it; the 2nd is how many seconds between runs; the rest is the command.
+# TODO: Add an option to supress STDOUT/STDERR.
+# TODO: Add an option to indicate progress (dots or spinner).
+function poll() {
+    if [ "$#" -lt '3' ]; then
+        echo 1>&2 "USAGE: $0 n i command - run command n times, every i seconds, until command succeeds"
+    fi
+
+    local tries=1
+    local max_tries="$1"
+    local wait="$2"
+    shift; shift  # Leaves the command to run in `$@`.
+
+
+    if "$@" ; then
+        return 0
+    fi
+    while [ "$tries" -lt "$max_tries" ]; do
+        sleep $wait
+        if "$@" ; then
+            return 0
+        fi
+        (( tries++ ))
+    done
+    
+    return 1
+}
